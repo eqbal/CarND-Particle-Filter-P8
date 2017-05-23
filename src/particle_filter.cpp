@@ -53,6 +53,26 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
+  normal_distribution < double > N_x_init(0, std_pos[0]);
+  normal_distribution < double > N_y_init(0, std_pos[1]);
+  normal_distribution < double > N_theta_init(0, std_pos[2]);
+
+  for (int i = 0; i < num_particles; i++) {
+
+    double n_x = N_x_init(gen);
+    double n_y = N_y_init(gen);
+    double n_theta = N_theta_init(gen);
+
+    // update heading
+    particles[i].theta += yaw_rate * delta_t + n_theta;
+
+    // move in the (noisy) commanded direction
+    double dist_x = velocity * delta_t + n_x;
+    particles[i].x += cos(particles[i].theta) * dist_x;
+
+    double dist_y = velocity * delta_t + n_y;
+    particles[i].y += sin(particles[i].theta) * dist_y;
+  }
 }
 
 void ParticleFilter::dataAssociation(std::vector < LandmarkObs > predicted, std::vector < LandmarkObs > & observations) {
