@@ -149,3 +149,5 @@ The submitted version uses 500 particles and shows almost the same results.
 Cumulative mean weighted error: x 0.106449 y 0.0895074 yaw 0.00344707
 Runtime (sec): 10.259
 ```
+
+![](./assets/animate_particles.gif)
