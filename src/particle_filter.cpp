@@ -17,13 +17,15 @@ using namespace std;
 
 static default_random_engine gen;
 
+const int     NumParticles   = 500;
+const bool    Debug          = false;
+const string  ReportFileName = "output/particles%d.txt";
+int           ReportCounter  = 0;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
-  num_particles = 500;
-
-  weights.resize(num_particles);
-  particles.resize(num_particles);
+  weights.resize(NumParticles);
+  particles.resize(NumParticles);
 
   normal_distribution < double > N_x_init(0, std[0]);
   normal_distribution < double > N_y_init(0, std[1]);
@@ -33,7 +35,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   double n_y;
   double n_theta;
 
-  for (int i = 0; i < num_particles; i++) {
+  for (int i = 0; i < NumParticles; i++) {
     weights[i] = 1.0;
 
     n_x = N_x_init(gen);
@@ -57,7 +59,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
   normal_distribution < double > N_y_init(0, std_pos[1]);
   normal_distribution < double > N_theta_init(0, std_pos[2]);
 
-  for (int i = 0; i < num_particles; i++) {
+  for (int i = 0; i < NumParticles; i++) {
 
     double n_x = N_x_init(gen);
     double n_y = N_y_init(gen);
@@ -98,6 +100,13 @@ void ParticleFilter::dataAssociation(std::vector <LandmarkObs> predicted, std::v
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   std::vector <LandmarkObs> observations, Map map_landmarks) {
 
+  // write particles to the file if needed
+  if(Debug)
+  {
+    char buf[50];
+    sprintf(buf, ReportFileName.c_str(), ReportCounter++);
+    write(buf);
+  }
   // prepare convenient map: id->reference to landmark
 
   map <int, Map::single_landmark_s *> idx2lm;
@@ -113,7 +122,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
   // iterate over particles
 
-  for (int k = 0; k < num_particles; k++) {
+  for (int k = 0; k < NumParticles; k++) {
     double partX = particles[k].x;
     double partY = particles[k].y;
     double partTheta = particles[k].theta;
@@ -205,7 +214,7 @@ void ParticleFilter::write(std::string filename) {
   std::ofstream dataFile;
   dataFile.open(filename, std::ios::app);
 
-  for (int i = 0; i < num_particles; ++i) {
+  for (int i = 0; i < NumParticles; ++i) {
     dataFile << particles[i].x << " " << particles[i].y << " " << particles[i].theta << "\n";
   }
   dataFile.close();
