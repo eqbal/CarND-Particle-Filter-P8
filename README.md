@@ -116,4 +116,36 @@ The two things the grading code is looking for are:
 2. **Performance**: your particle filter should complete execution within the time specified by `max_runtime` in `src/main.cpp`.
 
 
+## Results
 
+### Data representation
+
+Here is a one step representation of the data that includes: `Landmarks`, `Single set of observations in vehicle coordinate system`, `Single set of observations in map coordinate` and `Initial vehicle ground truth`.
+
+![](./assets/sample_data.png)
+
+### Output results:
+
+The minimum number of particles to pass the test is 11.
+
+```
+Cumulative mean weighted error: x 0.160364 y 0.128311 yaw 0.00511329
+Runtime (sec): 0.585984
+Success! Your particle filter passed!
+```
+
+The maximum number of particles to pass the test on my computer is approximately 1600.
+
+```
+Cumulative mean weighted error: x 0.107437 y 0.0998683 yaw 0.00349442
+Runtime (sec): 44.2359
+Success! Your particle filter passed!
+
+```
+
+The submitted version uses 500 particles and shows almost the same results.
+
+```
+Cumulative mean weighted error: x 0.106449 y 0.0895074 yaw 0.00344707
+Runtime (sec): 10.259
+```
