@@ -75,7 +75,24 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
   }
 }
 
-void ParticleFilter::dataAssociation(std::vector < LandmarkObs > predicted, std::vector < LandmarkObs > & observations) {
+void ParticleFilter::dataAssociation(std::vector <LandmarkObs> predicted, std::vector <LandmarkObs> & observations) {
+
+  for (int i = 0; i < observations.size(); i++) {
+    double min;
+    int closestLandmarkId = -1;
+
+    for (int j = 0; j < predicted.size(); j++) {
+      double distance = dist(observations[i].x, observations[i].y, predicted[j].x, predicted[j].y);
+
+      if (j == 0 || distance < min) {
+        min = distance;
+        closestLandmarkId = predicted[j].id;
+      }
+    }
+
+    observations[i].id = closestLandmarkId;
+  }
+
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],

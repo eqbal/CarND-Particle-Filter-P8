@@ -43,6 +43,13 @@ struct LandmarkObs {
 	double y;			// Local (vehicle coordinates) y position of landmark observation [m]
 };
 
+static LandmarkObs transformObservation(double partX, double partY, double partTheta, double observX, double observY) {
+  double obsNewX = observX * cos(partTheta) - observY * sin(partTheta) + partX;
+  double obsNewY = observX * sin(partTheta) + observY * cos(partTheta) + partY;
+
+  return LandmarkObs { 0, obsNewX, obsNewY };
+}
+
 /*
  * Computes the Euclidean distance between two 2D points.
  * @param (x1,y1) x and y coordinates of first point
