@@ -96,10 +96,108 @@ void ParticleFilter::dataAssociation(std::vector <LandmarkObs> predicted, std::v
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
-  std::vector < LandmarkObs > observations, Map map_landmarks) {
+  std::vector <LandmarkObs> observations, Map map_landmarks) {
+
+  // prepare convenient map: id->reference to landmark
+
+  map <int, Map::single_landmark_s *> idx2lm;
+  for (int i = 0; i < map_landmarks.landmark_list.size(); i++) {
+    idx2lm.insert(pair <int, Map::single_landmark_s *> (map_landmarks.landmark_list[i].id_i, & map_landmarks.landmark_list[i]));
+  }
+
+  // prepare helper variables for calculating weights
+
+  const double std_x = std_landmark[0];
+  const double std_y = std_landmark[1];
+  const double c = 1 / (2 * M_PI * sqrt(std_x) * sqrt(std_y));
+
+  // iterate over particles
+
+  for (int k = 0; k < num_particles; k++) {
+    double partX = particles[k].x;
+    double partY = particles[k].y;
+    double partTheta = particles[k].theta;
+
+    // predict landmarks - only ones within the range
+
+    vector <LandmarkObs> predicted;
+
+    for (int h = 0; h < map_landmarks.landmark_list.size(); h++) {
+      int id = map_landmarks.landmark_list[h].id_i;
+      double landX = map_landmarks.landmark_list[h].x_f;
+      double landY = map_landmarks.landmark_list[h].y_f;
+
+      if (dist(partX, partY, landX, landY) < sensor_range) {
+        predicted.push_back(LandmarkObs { id, landX, landY });
+      }
+    }
+
+    // measurements form local to global
+
+    vector <LandmarkObs> transformedObs;
+
+    for (int i = 0; i < observations.size(); i++) {
+      double obsX = observations[i].x;
+      double obsY = observations[i].y;
+
+      LandmarkObs obs = transformObservation(partX, partY, partTheta, obsX, obsY);
+      transformedObs.push_back(obs);
+    }
+
+    // find nearest landmarks
+
+    dataAssociation(predicted, transformedObs);
+
+    // calculate probabilities
+
+    double prob = 1.0;
+
+    for (int i = 0; i < transformedObs.size(); i++) {
+
+      // if no matching landmark then assign 0 prob for the particle
+      if (transformedObs[i].id == -1) {
+        prob = 0.0;
+        break;
+
+        // calculate new prob for the particle
+      } else {
+        Map::single_landmark_s * lm;
+        lm = idx2lm[transformedObs[i].id];
+
+        double x_lm = lm -> x_f;
+        double y_lm = lm -> y_f;
+        double x_obs = transformedObs[i].x;
+        double y_obs = transformedObs[i].y;
+
+        double x_diff = pow(x_obs - x_lm, 2) / std_x;
+        double y_diff = pow(y_obs - y_lm, 2) / std_y;
+
+        prob *= c * exp(-(x_diff + y_diff) / 2);
+      }
+    }
+
+    particles[k].weight = prob;
+  }
 }
 
 void ParticleFilter::resample() {
+
+  for (int i = 0; i < particles.size(); i++) {
+    weights[i] = particles[i].weight;
+  }
+
+  // draw new set of particles
+
+  discrete_distribution<> distribution(weights.begin(), weights.end());
+
+  vector <Particle> resample;
+
+  for (int i = 0; i < particles.size(); i++) {
+    int weighted_index = distribution(gen);
+    resample.push_back(particles[weighted_index]);
+  }
+
+  particles = resample;
 }
 
 void ParticleFilter::write(std::string filename) {
